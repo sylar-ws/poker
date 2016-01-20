@@ -32,10 +32,10 @@ class Card:
 		return self.suit == other.suit and self.number == other.number
 
 def main():
-	hand1 = [Card("5s"), Card("Kh")]
-	hand2 = [Card("Ad"), Card("Qc")]
+	hand1 = [Card("Ah"), Card("5s")]
+	hand2 = [Card("Jd"), Card("5d")]
 	community = []
-	# community = [Card("Ks"), Card("Kh"), Card("6s")]
+	# community = [Card("2c"), Card("Qs"), Card("Qd"), Card("5c"), Card("10s")]
 	results = calculate([hand1, hand2], community)
 	print(str(hand1[0]) + ", " + str(hand1[1]) + ": " + str(results[0]) + "%")
 	print(str(hand2[0]) + ", " + str(hand2[1]) + ": " + str(results[1]) + "%")
@@ -59,6 +59,8 @@ def calculate(listOfHands, community):
 	for _ in range(NUMSAMPLES):
 		combination = random_combination(deck, numCardsToCome)
 		newCommunity = community + [c for c in combination]
+		# for c in newCommunity:
+		# 	print(c)
 		score1, score2 = evaluate(listOfHands[0] + newCommunity), evaluate(listOfHands[1] + newCommunity)
 		if score1 > score2:
 			p1wins += 1
@@ -111,24 +113,31 @@ def evaluate(cards):
 		if isFullHouse(combination):
 			if best < 6:
 				best = 6 + kickerScore
+			continue
 		if flush:
 			if best < 5:
 				best = 5 + kickerScore
+			continue
 		if straight:
 			if best < 4:
 				best = 4 + kickerScore
+			continue
 		if isThreeKind(combination):
 			score = 3 + kickerScore
 			if score > best:
 				best = score
+			continue
 		if isTwoPair(combination):
-			score = 2 + kickerScore
+			twoPairScore = calcTwoPair(combination)
+			score = 2 + twoPairScore
 			if score > best:
 				best = score
+			continue
 		if isPair(combination):
 			score = 1 + kickerScore
 			if score > best:
 				best = score
+			continue
 		else:
 			score = kickerScore
 			if score > best:
@@ -202,6 +211,19 @@ def isTwoPair(cards):
 	if numPairs > 1:
 		return True
 	return False
+
+def calcTwoPair(combinations):
+	"Returns value of the two pair"
+	numbers = []
+	for combination in itertools.combinations(combinations, 2):
+		number = combination[0].number
+		if number == combination[1].number:
+			if number not in numbers:
+				numbers += [number]
+	for c in combinations:
+		if c.number not in numbers:
+			other = c.number
+	return numbers[0] * .07 + numbers[1] * .07 * .01 + other * .07 * .0001
 
 def isPair(cards):
 	"Returns True iff pair exists in 5 card hand"
