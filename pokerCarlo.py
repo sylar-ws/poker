@@ -33,9 +33,9 @@ class Card:
 
 def main():
 	hand1 = [Card("Ah"), Card("5s")]
-	hand2 = [Card("Jd"), Card("5d")]
+	hand2 = [Card("Jd"), Card("6d")]
 	community = []
-	# community = [Card("2c"), Card("Qs"), Card("Qd"), Card("5c"), Card("10s")]
+	# community = [Card("5h"), Card("6h"), Card("8s"), Card("Js"), Card("5c")]
 	results = calculate([hand1, hand2], community)
 	print(str(hand1[0]) + ", " + str(hand1[1]) + ": " + str(results[0]) + "%")
 	print(str(hand2[0]) + ", " + str(hand2[1]) + ": " + str(results[1]) + "%")
@@ -107,7 +107,7 @@ def evaluate(cards):
 		straight = isStraight(combination)
 		kickerScore = kickers(combination)
 		if flush and straight:
-			return 9999
+			return 9999 + kickerScore
 		if isFourKind(combination):
 			return 7 + kickerScore
 		if isFullHouse(combination):
@@ -119,11 +119,15 @@ def evaluate(cards):
 				best = 5 + kickerScore
 			continue
 		if straight:
+			# print("")
+			# for c in combination:
+			# 	print(c)
 			if best < 4:
 				best = 4 + kickerScore
 			continue
 		if isThreeKind(combination):
-			score = 3 + kickerScore
+			threeScore = calcThree(combination)
+			score = 3 + threeScore
 			if score > best:
 				best = score
 			continue
@@ -134,7 +138,8 @@ def evaluate(cards):
 				best = score
 			continue
 		if isPair(combination):
-			score = 1 + kickerScore
+			pairScore = calcPair(combination)
+			score = 1 + pairScore
 			if score > best:
 				best = score
 			continue
@@ -183,7 +188,7 @@ def isStraight(cards):
 		numbers += [card.number]
 	numbers.sort()
 	for i in range(len(numbers)-1):
-		if i == 3 and numbers[i+1] == 14:
+		if i == 3 and numbers[i+1] == 14 and numbers.__contains__(2):
 			return True
 		if numbers[i+1] - numbers[i] != 1:
 			return False
@@ -201,6 +206,21 @@ def isThreeKind(cards):
 		if kind:
 			return kind
 	return False
+
+def calcThree(combinations):
+	for combination in itertools.combinations(combinations, 3):
+		number = combination[0].number
+		kind = True
+		for card in combination:
+			if card.number != number:
+				continue
+		three = number
+	other = []
+	for c in combinations:
+		if c.number is not three:
+			other += [c.number]
+	other.sort()
+	return three * .07 + other[1] * .0007 + other[0] * .0000007
 
 def isTwoPair(cards):
 	"Returns True iff two pairs exist in 5 card hand"
@@ -223,7 +243,20 @@ def calcTwoPair(combinations):
 	for c in combinations:
 		if c.number not in numbers:
 			other = c.number
-	return numbers[0] * .07 + numbers[1] * .07 * .01 + other * .07 * .0001
+	return numbers[0] * .07 + numbers[1] * .0007 + other * .0000007
+
+def calcPair(combinations):
+	pair = None
+	nonPairs = []
+	for combination in itertools.combinations(combinations, 2):
+		number = combination[0].number
+		if number == combination[1].number:
+			pair = number
+	for c in combinations:
+		if c.number is not pair:
+			nonPairs += [c.number]
+	nonPairs.sort()
+	return pair * .07 + nonPairs[2] * .07 * .01 + nonPairs[1] * .07 * .0001 + nonPairs[0] * .07 * .000001
 
 def isPair(cards):
 	"Returns True iff pair exists in 5 card hand"
